@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function Calculator() {
-  const { setData } = useApp();
+  const { setData, getData } = useApp();
   const [unit, setUnit] = useState('metric');
   const [sex, setSex] = useState('male');
-  const [activeTab, setActiveTab] = useState('bmr');
+  const [activeTab, setActiveTab] = useState('macros');
   const [form, setForm] = useState({
     age: '', weight: '', height: '', heightFt: '', heightIn: '', activityLevel: '1.55',
   });
   const [results, setResults] = useState(null);
   const [saved, setSaved] = useState(false);
 
+  const savedGoals = getData('goals', null);
+
   const set = (k, v) => {
-    // Block negative values
     if (k !== 'activityLevel' && Number(v) < 0) return;
     setForm(f => ({ ...f, [k]: v }));
   };
@@ -35,7 +36,6 @@ export default function Calculator() {
     const bmr = sex === 'male'
       ? 10 * w + 6.25 * h - 5 * a + 5
       : 10 * w + 6.25 * h - 5 * a - 161;
-
     const tdee = bmr * Number(form.activityLevel);
 
     const heightM = h / 100;
@@ -70,6 +70,10 @@ export default function Calculator() {
       protein: results.protein,
       carbs: results.carbs,
       fat: results.fat,
+      bmr: results.bmr,
+      tdee: results.tdee,
+      bmi: results.bmi,
+      bmiCat: results.bmiCat,
       fromCalc: true,
     });
     setSaved(true);
@@ -83,12 +87,101 @@ export default function Calculator() {
     { val: '1.9', label: 'Super active (physical job)' },
   ];
 
+  const inputBlock = (
+    <>
+      <div style={{ display: 'flex', gap: 10, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+        <div>
+          <label className="form-label">Units</label>
+          <div className="seg-control" style={{ width: 'fit-content' }}>
+            <button className={`seg-btn${unit === 'metric' ? ' active' : ''}`} onClick={() => setUnit('metric')}>Metric (kg/cm)</button>
+            <button className={`seg-btn${unit === 'imperial' ? ' active' : ''}`} onClick={() => setUnit('imperial')}>Imperial (lbs/in)</button>
+          </div>
+        </div>
+        <div>
+          <label className="form-label">Sex</label>
+          <div className="seg-control" style={{ width: 'fit-content' }}>
+            <button className={`seg-btn${sex === 'male' ? ' active' : ''}`} onClick={() => setSex('male')}>Male</button>
+            <button className={`seg-btn${sex === 'female' ? ' active' : ''}`} onClick={() => setSex('female')}>Female</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-row" style={{ marginBottom: 12 }}>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label">Age (years)</label>
+          <input className="form-input" type="number" min="0" value={form.age} onChange={e => set('age', e.target.value)} placeholder="25" />
+        </div>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label">Weight ({unit === 'imperial' ? 'lbs' : 'kg'})</label>
+          <input className="form-input" type="number" min="0" value={form.weight} onChange={e => set('weight', e.target.value)} placeholder={unit === 'imperial' ? '150' : '68'} />
+        </div>
+        {unit === 'imperial' ? (
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Height (ft / in)</label>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input className="form-input" type="number" min="0" value={form.heightFt} onChange={e => set('heightFt', e.target.value)} placeholder="5" style={{ width: '50%' }} />
+              <input className="form-input" type="number" min="0" value={form.heightIn} onChange={e => set('heightIn', e.target.value)} placeholder="8" style={{ width: '50%' }} />
+            </div>
+          </div>
+        ) : (
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Height (cm)</label>
+            <input className="form-input" type="number" min="0" value={form.height} onChange={e => set('height', e.target.value)} placeholder="170" />
+          </div>
+        )}
+      </div>
+
+      {(activeTab === 'bmr' || activeTab === 'macros') && (
+        <div className="form-group">
+          <label className="form-label">Activity level</label>
+          <select className="form-select" value={form.activityLevel} onChange={e => set('activityLevel', e.target.value)}>
+            {ACTIVITY.map(a => <option key={a.val} value={a.val}>{a.label}</option>)}
+          </select>
+        </div>
+      )}
+
+      <button className="btn btn-primary" onClick={calculate}>Calculate</button>
+    </>
+  );
+
   return (
     <div className="page">
       <h1 className="page-title">Calculator</h1>
 
+      {/* Saved results summary */}
+      {savedGoals && savedGoals.fromCalc && (
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <div className="card-title" style={{ marginBottom: '0.75rem' }}>Saved results</div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: 12, color: '#b8849a', fontWeight: 600, marginBottom: 6 }}>MACROS (active on dashboard)</div>
+            <div className="grid-4">
+              <div className="stat-box"><div className="stat-value">{savedGoals.calories}</div><div className="stat-label">Calories</div></div>
+              <div className="stat-box"><div className="stat-value">{savedGoals.protein}g</div><div className="stat-label">Protein</div></div>
+              <div className="stat-box"><div className="stat-value">{savedGoals.carbs}g</div><div className="stat-label">Carbs</div></div>
+              <div className="stat-box"><div className="stat-value">{savedGoals.fat}g</div><div className="stat-label">Fat</div></div>
+            </div>
+          </div>
+          {savedGoals.bmr && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="stat-box" style={{ flex: 1 }}>
+                <div className="stat-value">{savedGoals.bmr}</div>
+                <div className="stat-label">BMR (cal/day)</div>
+              </div>
+              <div className="stat-box" style={{ flex: 1 }}>
+                <div className="stat-value">{savedGoals.tdee}</div>
+                <div className="stat-label">TDEE (cal/day)</div>
+              </div>
+              <div className="stat-box" style={{ flex: 1 }}>
+                <div className="stat-value">{savedGoals.bmi}</div>
+                <div className="stat-label">BMI — {savedGoals.bmiCat}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="seg-control" style={{ marginBottom: '1.5rem' }}>
-        {['bmr', 'bmi', 'macros'].map(t => (
+        {['macros', 'bmr', 'bmi'].map(t => (
           <button
             key={t}
             className={`seg-btn${activeTab === t ? ' active' : ''}`}
@@ -100,93 +193,10 @@ export default function Calculator() {
       </div>
 
       <div className="card">
-        {/* Unit + Sex toggles */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-          <div>
-            <label className="form-label">Units</label>
-            <div className="seg-control" style={{ width: 'fit-content' }}>
-              <button className={`seg-btn${unit === 'metric' ? ' active' : ''}`} onClick={() => setUnit('metric')}>Metric (kg/cm)</button>
-              <button className={`seg-btn${unit === 'imperial' ? ' active' : ''}`} onClick={() => setUnit('imperial')}>Imperial (lbs/in)</button>
-            </div>
-          </div>
-          <div>
-            <label className="form-label">Sex</label>
-            <div className="seg-control" style={{ width: 'fit-content' }}>
-              <button className={`seg-btn${sex === 'male' ? ' active' : ''}`} onClick={() => setSex('male')}>Male</button>
-              <button className={`seg-btn${sex === 'female' ? ' active' : ''}`} onClick={() => setSex('female')}>Female</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-row" style={{ marginBottom: 12 }}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Age (years)</label>
-            <input
-              className="form-input" type="number" min="0"
-              value={form.age} onChange={e => set('age', e.target.value)} placeholder="25"
-            />
-          </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Weight ({unit === 'imperial' ? 'lbs' : 'kg'})</label>
-            <input
-              className="form-input" type="number" min="0"
-              value={form.weight} onChange={e => set('weight', e.target.value)}
-              placeholder={unit === 'imperial' ? '150' : '68'}
-            />
-          </div>
-          {unit === 'imperial' ? (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Height (ft / in)</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input className="form-input" type="number" min="0" value={form.heightFt} onChange={e => set('heightFt', e.target.value)} placeholder="5" style={{ width: '50%' }} />
-                <input className="form-input" type="number" min="0" value={form.heightIn} onChange={e => set('heightIn', e.target.value)} placeholder="8" style={{ width: '50%' }} />
-              </div>
-            </div>
-          ) : (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Height (cm)</label>
-              <input
-                className="form-input" type="number" min="0"
-                value={form.height} onChange={e => set('height', e.target.value)} placeholder="170"
-              />
-            </div>
-          )}
-        </div>
-
-        {(activeTab === 'bmr' || activeTab === 'macros') && (
-          <div className="form-group">
-            <label className="form-label">Activity level</label>
-            <select className="form-select" value={form.activityLevel} onChange={e => set('activityLevel', e.target.value)}>
-              {ACTIVITY.map(a => <option key={a.val} value={a.val}>{a.label}</option>)}
-            </select>
-          </div>
-        )}
-
-        <button className="btn btn-primary" onClick={calculate}>Calculate</button>
+        {inputBlock}
 
         {results && (
           <div style={{ marginTop: '1.5rem' }}>
-            {activeTab === 'bmr' && (
-              <>
-                <div className="result-box">
-                  <div style={{ fontSize: 13, color: '#8a7460', marginBottom: 4 }}>Basal Metabolic Rate</div>
-                  <div className="result-value">{results.bmr}</div>
-                  <div className="result-label">calories/day at complete rest</div>
-                </div>
-                <div className="result-box" style={{ marginTop: 10 }}>
-                  <div style={{ fontSize: 13, color: '#8a7460', marginBottom: 4 }}>Total Daily Energy Expenditure (TDEE)</div>
-                  <div className="result-value">{results.tdee}</div>
-                  <div className="result-label">calories/day with your activity level</div>
-                </div>
-              </>
-            )}
-            {activeTab === 'bmi' && (
-              <div className="result-box">
-                <div style={{ fontSize: 13, color: '#8a7460', marginBottom: 4 }}>Body Mass Index</div>
-                <div className="result-value">{results.bmi}</div>
-                <div className="result-label">{results.bmiCat}</div>
-              </div>
-            )}
             {activeTab === 'macros' && (
               <>
                 <div className="grid-4" style={{ marginBottom: '1rem' }}>
@@ -199,11 +209,32 @@ export default function Calculator() {
                   {saved ? '✓ Goals saved! Dashboard rings updated.' : 'Save as my daily goals'}
                 </button>
                 {saved && (
-                  <div style={{ fontSize: 13, color: '#7a5c30', marginTop: 8, textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, color: '#b8849a', marginTop: 8, textAlign: 'center' }}>
                     Your dashboard rings now reflect these macro targets.
                   </div>
                 )}
               </>
+            )}
+            {activeTab === 'bmr' && (
+              <>
+                <div className="result-box">
+                  <div style={{ fontSize: 13, color: '#b8849a', marginBottom: 4 }}>Basal Metabolic Rate</div>
+                  <div className="result-value">{results.bmr}</div>
+                  <div className="result-label">calories/day at complete rest</div>
+                </div>
+                <div className="result-box" style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 13, color: '#b8849a', marginBottom: 4 }}>TDEE</div>
+                  <div className="result-value">{results.tdee}</div>
+                  <div className="result-label">calories/day with your activity level</div>
+                </div>
+              </>
+            )}
+            {activeTab === 'bmi' && (
+              <div className="result-box">
+                <div style={{ fontSize: 13, color: '#b8849a', marginBottom: 4 }}>Body Mass Index</div>
+                <div className="result-value">{results.bmi}</div>
+                <div className="result-label">{results.bmiCat}</div>
+              </div>
             )}
           </div>
         )}

@@ -19,20 +19,25 @@ const FOOD_DB = [
 export default function FoodTracker() {
   const { getData, setData } = useApp();
   const today = new Date().toISOString().split('T')[0];
-  const foodLog = getData('foodLog', []);
-  const todayLog = foodLog.filter(f => f.date === today);
 
-  const totals = todayLog.reduce((a, f) => ({
-    calories: a.calories + f.calories,
-    carbs: a.carbs + f.carbs,
-    protein: a.protein + f.protein,
-    fat: a.fat + f.fat,
-  }), { calories: 0, carbs: 0, protein: 0, fat: 0 });
+  // Use local state for the log so deletions are instant
+  const [foodLog, setFoodLog] = useState(() => getData('foodLog', []));
+
+  const todayLog = foodLog.filter(f => f.date === today);
+  const totals = todayLog.reduce(
+    (a, f) => ({ calories: a.calories + f.calories, carbs: a.carbs + f.carbs, protein: a.protein + f.protein, fat: a.fat + f.fat }),
+    { calories: 0, carbs: 0, protein: 0, fat: 0 }
+  );
 
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
   const [custom, setCustom] = useState({ name: '', calories: '', carbs: '', protein: '', fat: '', amount: '' });
   const [showCustom, setShowCustom] = useState(false);
+
+  const persist = (updated) => {
+    setFoodLog(updated);
+    setData('foodLog', updated);
+  };
 
   const handleSearch = (q) => {
     setSearch(q);
@@ -42,8 +47,9 @@ export default function FoodTracker() {
 
   const addFood = (food) => {
     const entry = { ...food, id: Date.now(), date: today, amount: food.serving };
-    setData('foodLog', [...foodLog, entry]);
-    setSearch(''); setResults([]);
+    persist([...foodLog, entry]);
+    setSearch('');
+    setResults([]);
   };
 
   const addCustom = () => {
@@ -51,18 +57,22 @@ export default function FoodTracker() {
     const entry = {
       id: Date.now(), date: today,
       name: custom.name,
-      calories: Number(custom.calories),
-      carbs: Number(custom.carbs) || 0,
-      protein: Number(custom.protein) || 0,
-      fat: Number(custom.fat) || 0,
+      calories: Math.max(0, Number(custom.calories)),
+      carbs: Math.max(0, Number(custom.carbs) || 0),
+      protein: Math.max(0, Number(custom.protein) || 0),
+      fat: Math.max(0, Number(custom.fat) || 0),
       amount: custom.amount || '1 serving',
     };
-    setData('foodLog', [...foodLog, entry]);
+    persist([...foodLog, entry]);
     setCustom({ name: '', calories: '', carbs: '', protein: '', fat: '', amount: '' });
     setShowCustom(false);
   };
 
-  const deleteFood = (id) => setData('foodLog', foodLog.filter(f => f.id !== id));
+  // Instant delete — updates local state immediately, then persists
+  const deleteFood = (id) => {
+    const updated = foodLog.filter(f => f.id !== id);
+    persist(updated);
+  };
 
   return (
     <div className="page">
@@ -74,7 +84,12 @@ export default function FoodTracker() {
           <div style={{ flex: 1 }}>
             <div className="search-wrap">
               <span className="search-icon">🔍</span>
-              <input className="search-input" placeholder="Search for foods..." value={search} onChange={e => handleSearch(e.target.value)} />
+              <input
+                className="search-input"
+                placeholder="Search for foods..."
+                value={search}
+                onChange={e => handleSearch(e.target.value)}
+              />
             </div>
             {results.length > 0 && (
               <div className="search-results">
@@ -87,7 +102,9 @@ export default function FoodTracker() {
               </div>
             )}
           </div>
-          <button className="btn btn-primary" style={{ width: 'auto', whiteSpace: 'nowrap' }} onClick={() => setShowCustom(s => !s)}>+ Add custom</button>
+          <button className="btn btn-primary" style={{ width: 'auto', whiteSpace: 'nowrap' }} onClick={() => setShowCustom(s => !s)}>
+            + Add custom
+          </button>
         </div>
 
         {showCustom && (
@@ -105,21 +122,21 @@ export default function FoodTracker() {
             <div className="form-row" style={{ marginBottom: 10 }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Calories</label>
-                <input className="form-input" type="number" value={custom.calories} onChange={e => setCustom(c => ({ ...c, calories: e.target.value }))} placeholder="0" />
+                <input className="form-input" type="number" min="0" value={custom.calories} onChange={e => setCustom(c => ({ ...c, calories: e.target.value }))} placeholder="0" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Protein (g)</label>
-                <input className="form-input" type="number" value={custom.protein} onChange={e => setCustom(c => ({ ...c, protein: e.target.value }))} placeholder="0" />
+                <input className="form-input" type="number" min="0" value={custom.protein} onChange={e => setCustom(c => ({ ...c, protein: e.target.value }))} placeholder="0" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Carbs (g)</label>
-                <input className="form-input" type="number" value={custom.carbs} onChange={e => setCustom(c => ({ ...c, carbs: e.target.value }))} placeholder="0" />
+                <input className="form-input" type="number" min="0" value={custom.carbs} onChange={e => setCustom(c => ({ ...c, carbs: e.target.value }))} placeholder="0" />
               </div>
             </div>
             <div className="form-row-2" style={{ marginBottom: 10 }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Fat (g)</label>
-                <input className="form-input" type="number" value={custom.fat} onChange={e => setCustom(c => ({ ...c, fat: e.target.value }))} placeholder="0" />
+                <input className="form-input" type="number" min="0" value={custom.fat} onChange={e => setCustom(c => ({ ...c, fat: e.target.value }))} placeholder="0" />
               </div>
             </div>
             <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={addCustom}>Add food</button>
@@ -151,7 +168,8 @@ export default function FoodTracker() {
               </div>
               <button className="delete-btn" onClick={() => deleteFood(f.id)}>🗑</button>
             </div>
-          ))}
+          ))
+        }
       </div>
     </div>
   );

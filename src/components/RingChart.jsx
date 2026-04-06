@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export default function RingChart({ value, max, size = 80, color = '#7a5c30', label, sublabel }) {
+export default function RingChart({ value, max, size = 80, color = '#e07090', label, sublabel }) {
   const r = (size - 10) / 2;
   const circ = 2 * Math.PI * r;
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
@@ -11,7 +11,7 @@ export default function RingChart({ value, max, size = 80, color = '#7a5c30', la
   return (
     <div className="ring-wrap">
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e8e0d4" strokeWidth={8} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f5cfd8" strokeWidth={8} />
         <circle
           cx={size/2} cy={size/2} r={r} fill="none"
           stroke={pct >= 1 ? '#e74c3c' : color}
@@ -22,7 +22,7 @@ export default function RingChart({ value, max, size = 80, color = '#7a5c30', la
         />
       </svg>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#2c2416', marginTop: -4 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#2d1f26', marginTop: -4 }}>
           {Math.max(0, Math.round(remaining))}
         </div>
         {sublabel && <div className="ring-label">{sublabel}</div>}

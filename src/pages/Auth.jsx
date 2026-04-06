@@ -27,7 +27,7 @@ export default function Auth() {
     if (Object.keys(e).length) return;
     const res = login(form.email, form.password);
     if (!res.success) { setServerError(res.error); return; }
-    navigate('/dashboard');
+    navigate('/');
   };
 
   const handleRegister = () => {
@@ -49,7 +49,7 @@ export default function Auth() {
     <div className="auth-page">
       <div className="auth-logo-wrap">
         <div className="auth-logo">FT</div>
-        <div className="auth-app-name">Fitness Tracker</div>
+        <div className="auth-app-name">FitPro</div>
         <div className="auth-tagline">Track your nutrition and workouts</div>
       </div>
       <div className="auth-card">

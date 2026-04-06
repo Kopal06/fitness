@@ -17,8 +17,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/" element={<ProtectedRoute><><Navbar /><Home /></></ProtectedRoute>} />
-      <Route path="/calculator" element={<ProtectedRoute><><Navbar /><Calculator /></></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><><Navbar /><Dashboard /></></ProtectedRoute>} />
+      <Route path="/calculator" element={<ProtectedRoute><><Navbar /><Calculator /></></ProtectedRoute>} />
       <Route path="/food" element={<ProtectedRoute><><Navbar /><FoodTracker /></></ProtectedRoute>} />
       <Route path="/workout" element={<ProtectedRoute><><Navbar /><Workout /></></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><><Navbar /><Progress /></></ProtectedRoute>} />

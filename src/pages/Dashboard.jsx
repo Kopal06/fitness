@@ -14,7 +14,9 @@ export default function Dashboard() {
   const [workoutOpen, setWorkoutOpen] = useState(true);
   const [waterAnim, setWaterAnim] = useState(false);
 
-  const goals = getData('goals', { calories: 2000, protein: 150, carbs: 200, fat: 65 });
+  const goals = getData('goals', null);
+  const hasGoals = goals && goals.fromCalc;
+
   const foodLog = getData('foodLog', []);
   const workoutLog = getData('workoutLog', []);
   const waterLog = getData('waterLog', []);
@@ -32,7 +34,6 @@ export default function Dashboard() {
   const workoutCalsBurned = todayWorkout.reduce((a, b) => a + (b.calories || 0), 0);
   const stepCalsBurned = Math.round((Number(progressData.steps) || 0) * CALS_PER_STEP);
   const totalCalsBurned = workoutCalsBurned + stepCalsBurned;
-
   const netCals = Math.max(0, totalCals - totalCalsBurned);
 
   const dateStr = new Date().toLocaleDateString('en-US', {
@@ -46,84 +47,190 @@ export default function Dashboard() {
     setTimeout(() => setWaterAnim(false), 600);
   };
 
+  const statBox = {
+    background: '#fce4ea',
+    borderRadius: 12,
+    padding: '1rem',
+    textAlign: 'center',
+  };
+  const statValue = { fontSize: 22, fontWeight: 700, color: '#2d1f26' };
+  const statLabel = { fontSize: 12, color: '#9e7080', marginTop: 4, fontWeight: 500 };
+  const statSub = { fontSize: 11, color: '#b8849a', marginTop: 4 };
+
+  const secondaryBtn = {
+    background: '#fce4ea',
+    color: '#c0627a',
+    border: 'none',
+    borderRadius: 10,
+    padding: '12px 20px',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    transition: 'opacity 0.15s',
+  };
+
+  const outlineBtn = {
+    background: '#fff',
+    border: '2px solid #f4a0b5',
+    color: '#c0627a',
+    borderRadius: 10,
+    padding: '12px 20px',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    transition: 'opacity 0.15s',
+  };
+
   return (
     <div className="page">
       <h1 className="page-title">Dashboard</h1>
-      <div style={{ color: '#8a7460', marginBottom: '1.5rem', fontSize: 15 }}>{dateStr}</div>
+      <div style={{ color: '#b8849a', marginBottom: '1.5rem', fontSize: 15 }}>{dateStr}</div>
 
-      {/* Rings */}
+      {/* No goals banner */}
+      {!hasGoals && (
+        <div style={{
+          background: '#fce4ea',
+          border: '1.5px solid #f5cfd8',
+          borderRadius: 14,
+          padding: '1rem 1.25rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: '#c0627a', marginBottom: 2 }}>
+              Dashboard rings are inactive
+            </div>
+            <div style={{ fontSize: 13, color: '#9e7080' }}>
+              Calculate your macros in the Calculator to activate your daily rings.
+            </div>
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ width: 'auto', whiteSpace: 'nowrap' }}
+            onClick={() => navigate('/calculator')}
+          >
+            Go to Calculator →
+          </button>
+        </div>
+      )}
+
+      {/* Rings card */}
       <div className="card" style={{ marginBottom: '1rem' }}>
-        <div className="rings-row">
-          <RingChart value={netCals} max={goals.calories} size={90} color="#7a5c30" label="Calories" sublabel={`${Math.max(0, goals.calories - netCals)} left`} />
-          <RingChart value={totalProtein} max={goals.protein || 150} size={90} color="#c0834d" label="Protein" sublabel={`${Math.max(0, (goals.protein || 150) - totalProtein)}g left`} />
-          <RingChart value={totalCarbs} max={goals.carbs || 200} size={90} color="#b5a06e" label="Carbs" sublabel={`${Math.max(0, (goals.carbs || 200) - totalCarbs)}g left`} />
-          <RingChart value={totalFat} max={goals.fat || 65} size={90} color="#8a6d3a" label="Fat" sublabel={`${Math.max(0, (goals.fat || 65) - totalFat)}g left`} />
-        </div>
-        <div style={{ marginTop: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-            <span style={{ color: '#8a7460' }}>Daily calorie goal</span>
-            <span style={{ fontWeight: 600 }}>{Math.round((netCals / goals.calories) * 100)}%</span>
+        {!hasGoals ? (
+          <div style={{ opacity: 0.4, pointerEvents: 'none' }}>
+            <div className="rings-row">
+              {['Calories', 'Protein', 'Carbs', 'Fat'].map(label => (
+                <div key={label} className="ring-wrap">
+                  <svg width={90} height={90} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={45} cy={45} r={35} fill="none" stroke="#fce4ea" strokeWidth={8} />
+                  </svg>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#2d1f26', marginTop: -4 }}>0</div>
+                    <div className="ring-label">left</div>
+                  </div>
+                  <div className="ring-label">{label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                <span style={{ color: '#b8849a' }}>Daily calorie goal</span>
+                <span style={{ fontWeight: 600 }}>0%</span>
+              </div>
+              <div className="progress-bar-wrap">
+                <div className="progress-bar-fill" style={{ width: '0%' }} />
+              </div>
+            </div>
+            <div className="grid-3" style={{ marginTop: '1rem' }}>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Carbs</span><div style={{ fontWeight: 600, fontSize: 15 }}>0g</div></div>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Protein</span><div style={{ fontWeight: 600, fontSize: 15 }}>0g</div></div>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Fat</span><div style={{ fontWeight: 600, fontSize: 15 }}>0g</div></div>
+            </div>
           </div>
-          <div className="progress-bar-wrap">
-            <div className="progress-bar-fill" style={{ width: `${Math.min(100, Math.max(0, (netCals / goals.calories) * 100))}%` }} />
-          </div>
-        </div>
-        <div className="grid-3" style={{ marginTop: '1rem' }}>
-          <div><span style={{ fontSize: 12, color: '#8a7460' }}>Carbs</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalCarbs}g</div></div>
-          <div><span style={{ fontSize: 12, color: '#8a7460' }}>Protein</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalProtein}g</div></div>
-          <div><span style={{ fontSize: 12, color: '#8a7460' }}>Fat</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalFat}g</div></div>
-        </div>
+        ) : (
+          <>
+            <div className="rings-row">
+              <RingChart value={netCals} max={goals.calories} size={90} color="#e07090" label="Calories" sublabel={`${Math.max(0, goals.calories - netCals)} left`} />
+              <RingChart value={totalProtein} max={goals.protein} size={90} color="#f4a0b5" label="Protein" sublabel={`${Math.max(0, goals.protein - totalProtein)}g left`} />
+              <RingChart value={totalCarbs} max={goals.carbs} size={90} color="#c96b85" label="Carbs" sublabel={`${Math.max(0, goals.carbs - totalCarbs)}g left`} />
+              <RingChart value={totalFat} max={goals.fat} size={90} color="#e8b4c2" label="Fat" sublabel={`${Math.max(0, goals.fat - totalFat)}g left`} />
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                <span style={{ color: '#b8849a' }}>Daily calorie goal</span>
+                <span style={{ fontWeight: 600 }}>{Math.round((netCals / goals.calories) * 100)}%</span>
+              </div>
+              <div className="progress-bar-wrap">
+                <div className="progress-bar-fill" style={{ width: `${Math.min(100, Math.max(0, (netCals / goals.calories) * 100))}%` }} />
+              </div>
+            </div>
+            <div className="grid-3" style={{ marginTop: '1rem' }}>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Carbs</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalCarbs}g</div></div>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Protein</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalProtein}g</div></div>
+              <div><span style={{ fontSize: 12, color: '#b8849a' }}>Fat</span><div style={{ fontWeight: 600, fontSize: 15 }}>{totalFat}g</div></div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Stats Row */}
       <div className="grid-3" style={{ marginBottom: '1rem' }}>
-        <div className="stat-box">
-          <div className="stat-value">{totalCals}</div>
-          <div className="stat-label">Calories consumed</div>
+        <div style={statBox}>
+          <div style={statValue}>{totalCals}</div>
+          <div style={statLabel}>Calories consumed</div>
         </div>
-        <div className="stat-box">
-          <div className="stat-value">{totalCalsBurned}</div>
-          <div className="stat-label">Active Calories Burned</div>
-          <div style={{ fontSize: 11, color: '#8a7460', marginTop: 4 }}>
-            {workoutCalsBurned} workout + {stepCalsBurned} steps
-          </div>
+        <div style={statBox}>
+          <div style={statValue}>{totalCalsBurned}</div>
+          <div style={statLabel}>Active Calories Burned</div>
+          <div style={statSub}>{workoutCalsBurned} workout + {stepCalsBurned} steps</div>
         </div>
-        <div
-          className="stat-box"
-          style={{ transition: 'background 0.3s', background: waterAnim ? '#d4eaf7' : '#f3ede4' }}
-        >
-          <div className="stat-value">{todayWater}</div>
-          <div className="stat-label">Water (cups)</div>
+        <div style={{
+          ...statBox,
+          background: waterAnim ? '#f5c6d3' : '#fce4ea',
+          transition: 'background 0.3s',
+        }}>
+          <div style={statValue}>{todayWater}</div>
+          <div style={statLabel}>Water (cups)</div>
         </div>
       </div>
 
       <div className="grid-2" style={{ marginBottom: '1rem' }}>
-        <div className="stat-box">
-          <div className="stat-value">{progressData.steps || 0}</div>
-          <div className="stat-label">Steps today</div>
-          {stepCalsBurned > 0 && (
-            <div style={{ fontSize: 11, color: '#8a7460', marginTop: 4 }}>≈ {stepCalsBurned} cal burned</div>
-          )}
+        <div style={statBox}>
+          <div style={statValue}>{progressData.steps || 0}</div>
+          <div style={statLabel}>Steps today</div>
+          {stepCalsBurned > 0 && <div style={statSub}>≈ {stepCalsBurned} cal burned</div>}
         </div>
-        <div className="stat-box">
-          <div className="stat-value">{progressData.sleep || 0}h</div>
-          <div className="stat-label">Sleep last night</div>
+        <div style={statBox}>
+          <div style={statValue}>{progressData.sleep || 0}h</div>
+          <div style={statLabel}>Sleep last night</div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="grid-3" style={{ marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary" onClick={() => navigate('/food')}>+ Log meal</button>
-        <button
-          className="btn"
-          style={{ background: '#f3ede4', color: '#2c2416', border: 'none', borderRadius: 10, padding: '12px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-          onClick={() => navigate('/workout')}
-        >+ Log workout</button>
-        <button
-          className="btn"
-          style={{ background: '#fff', border: '1.5px solid #e0d5c5', color: '#2c2416', borderRadius: 10, padding: '12px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-          onClick={logWater}
-        >+ Log water</button>
+        <button className="btn btn-primary" onClick={() => navigate('/food')}>
+          + Log meal
+        </button>
+        <button style={secondaryBtn} onClick={() => navigate('/workout')}>
+          + Log workout
+        </button>
+        <button style={outlineBtn} onClick={logWater}>
+          + Log water
+        </button>
       </div>
 
       {/* Food log */}
@@ -134,7 +241,7 @@ export default function Dashboard() {
         </div>
         {foodOpen && (
           todayFood.length === 0
-            ? <div style={{ color: '#8a7460', fontSize: 14 }}>Nothing logged yet</div>
+            ? <div style={{ color: '#b8849a', fontSize: 14 }}>Nothing logged yet</div>
             : todayFood.map(f => (
               <div key={f.id} className="log-item">
                 <div>
@@ -154,7 +261,7 @@ export default function Dashboard() {
         </div>
         {workoutOpen && (
           todayWorkout.length === 0
-            ? <div style={{ color: '#8a7460', fontSize: 14 }}>No workouts logged yet</div>
+            ? <div style={{ color: '#b8849a', fontSize: 14 }}>No workouts logged yet</div>
             : todayWorkout.map(w => (
               <div key={w.id} className="log-item">
                 <div>
