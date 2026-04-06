@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/fitness/static/css/main.37c75dfd.css",
-    "main.js": "/fitness/static/js/main.3faeb709.js",
+    "main.js": "/fitness/static/js/main.74a95cdf.js",
     "index.html": "/fitness/index.html",
     "main.37c75dfd.css.map": "/fitness/static/css/main.37c75dfd.css.map",
-    "main.3faeb709.js.map": "/fitness/static/js/main.3faeb709.js.map"
+    "main.74a95cdf.js.map": "/fitness/static/js/main.74a95cdf.js.map"
   },
   "entrypoints": [
     "static/css/main.37c75dfd.css",
-    "static/js/main.3faeb709.js"
+    "static/js/main.74a95cdf.js"
   ]
 }
