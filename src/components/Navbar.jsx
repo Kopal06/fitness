@@ -8,7 +8,6 @@ const LINKS = [
   { label: 'Calculator', path: '/calculator' },
   { label: 'Food Tracker', path: '/food' },
   { label: 'Workout', path: '/workout' },
-  { label: 'Progress', path: '/progress' },
   { label: 'Settings', path: '/settings' },
 ];
 
@@ -75,8 +74,7 @@ export default function Navbar() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-danger" onClick={handleReset}>Yes, reset everything</button>
               <button
-                className="btn"
-                style={{ background: '#fceef1', color: '#2d1f26', border: 'none', borderRadius: 10, padding: '12px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', flex: 1, justifyContent: 'center', display: 'flex' }}
+                style={{ background: '#fce4ea', color: '#c0627a', border: 'none', borderRadius: 10, padding: '12px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', flex: 1, justifyContent: 'center', display: 'flex', fontFamily: 'inherit' }}
                 onClick={() => setShowConfirm(false)}
               >Cancel</button>
             </div>

@@ -14,6 +14,14 @@ export default function Dashboard() {
   const [workoutOpen, setWorkoutOpen] = useState(true);
   const [waterAnim, setWaterAnim] = useState(false);
 
+  // Steps inline editing
+  const [editingSteps, setEditingSteps] = useState(false);
+  const [stepsInput, setStepsInput] = useState('');
+
+  // Sleep inline editing
+  const [editingSleep, setEditingSleep] = useState(false);
+  const [sleepInput, setSleepInput] = useState('');
+
   const goals = getData('goals', null);
   const hasGoals = goals && goals.fromCalc;
 
@@ -47,6 +55,19 @@ export default function Dashboard() {
     setTimeout(() => setWaterAnim(false), 600);
   };
 
+  const saveSteps = () => {
+    const val = Math.max(0, Number(stepsInput) || 0);
+    setData('progressData', { ...progressData, steps: val });
+    setEditingSteps(false);
+  };
+
+  const saveSleep = () => {
+    const val = Math.max(0, Number(sleepInput) || 0);
+    setData('progressData', { ...progressData, sleep: val });
+    setEditingSleep(false);
+  };
+
+  // Styles
   const statBox = {
     background: '#fce4ea',
     borderRadius: 12,
@@ -91,6 +112,19 @@ export default function Dashboard() {
     transition: 'opacity 0.15s',
   };
 
+  const logBtn = {
+    marginTop: 8,
+    background: '#fce4ea',
+    color: '#c0627a',
+    border: 'none',
+    borderRadius: 8,
+    padding: '6px 14px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+  };
+
   return (
     <div className="page">
       <h1 className="page-title">Dashboard</h1>
@@ -99,16 +133,10 @@ export default function Dashboard() {
       {/* No goals banner */}
       {!hasGoals && (
         <div style={{
-          background: '#fce4ea',
-          border: '1.5px solid #f5cfd8',
-          borderRadius: 14,
-          padding: '1rem 1.25rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          flexWrap: 'wrap',
+          background: '#fce4ea', border: '1.5px solid #f5cfd8', borderRadius: 14,
+          padding: '1rem 1.25rem', marginBottom: '1rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, flexWrap: 'wrap',
         }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, color: '#c0627a', marginBottom: 2 }}>
@@ -208,15 +236,70 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Steps + Sleep inline log row */}
       <div className="grid-2" style={{ marginBottom: '1rem' }}>
+
+        {/* Steps */}
         <div style={statBox}>
           <div style={statValue}>{progressData.steps || 0}</div>
           <div style={statLabel}>Steps today</div>
           {stepCalsBurned > 0 && <div style={statSub}>≈ {stepCalsBurned} cal burned</div>}
+          {editingSteps ? (
+            <div style={{ marginTop: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
+              <input
+                type="number"
+                min="0"
+                value={stepsInput}
+                onChange={e => setStepsInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveSteps()}
+                placeholder="e.g. 8000"
+                autoFocus
+                style={{
+                  width: 110, padding: '5px 10px', borderRadius: 8,
+                  border: '1.5px solid #f4a0b5', fontSize: 13,
+                  fontFamily: 'inherit', outline: 'none', color: '#2d1f26',
+                }}
+              />
+              <button style={{ ...logBtn, padding: '6px 10px' }} onClick={saveSteps}>✓</button>
+              <button style={{ ...logBtn, padding: '6px 10px', background: '#fff', border: '1px solid #f5cfd8', color: '#b8849a' }} onClick={() => setEditingSteps(false)}>✕</button>
+            </div>
+          ) : (
+            <button style={logBtn} onClick={() => { setStepsInput(progressData.steps || ''); setEditingSteps(true); }}>
+              + Log steps
+            </button>
+          )}
         </div>
+
+        {/* Sleep */}
         <div style={statBox}>
           <div style={statValue}>{progressData.sleep || 0}h</div>
           <div style={statLabel}>Sleep last night</div>
+          {editingSleep ? (
+            <div style={{ marginTop: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
+              <input
+                type="number"
+                min="0"
+                max="24"
+                step="0.5"
+                value={sleepInput}
+                onChange={e => setSleepInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveSleep()}
+                placeholder="e.g. 7.5"
+                autoFocus
+                style={{
+                  width: 110, padding: '5px 10px', borderRadius: 8,
+                  border: '1.5px solid #f4a0b5', fontSize: 13,
+                  fontFamily: 'inherit', outline: 'none', color: '#2d1f26',
+                }}
+              />
+              <button style={{ ...logBtn, padding: '6px 10px' }} onClick={saveSleep}>✓</button>
+              <button style={{ ...logBtn, padding: '6px 10px', background: '#fff', border: '1px solid #f5cfd8', color: '#b8849a' }} onClick={() => setEditingSleep(false)}>✕</button>
+            </div>
+          ) : (
+            <button style={logBtn} onClick={() => { setSleepInput(progressData.sleep || ''); setEditingSleep(true); }}>
+              + Log sleep
+            </button>
+          )}
         </div>
       </div>
 
